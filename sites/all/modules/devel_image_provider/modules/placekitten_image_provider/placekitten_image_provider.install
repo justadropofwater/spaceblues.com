@@ -1,0 +1,14 @@
+<?php
+
+/**
+ * @file
+ * Install hooks for devel image provider: placekitten. 
+ */
+
+/**
+ * Implements hook_uninstall(). 
+ */
+function placekitten_image_provider_uninstall() {
+  variable_del('devel_image_provider_placekitten_gray');
+  variable_del('devel_image_provider_placekitten_get_method');
+}

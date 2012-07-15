@@ -1,0 +1,13 @@
+<?php
+
+/**
+ * @file
+ * Install hooks for devel image provider. 
+ */
+
+/**
+ * Implements hook_uninstall(). 
+ */
+function devel_image_provider_uninstall() {
+  variable_del('devel_generate_image_function');
+}

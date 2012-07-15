@@ -1,0 +1,11 @@
+name = spaceblues.com User Dashboard Properties
+description = Adds CSS styles and markup for the User Dashboard.
+core = 7.x
+version = 1.x
+package = spacelues.com
+dependencies[] = views
+dependencies[] = panels
+
+stylesheets[all][] = css/styles.css
+
+

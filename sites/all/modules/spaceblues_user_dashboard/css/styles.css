@@ -1,0 +1,42 @@
+.user-dashboard-region {
+  float: left;
+  min-height: 1px;
+  margin: 0 0 10px 0;
+  padding: 5px 10px;
+}
+
+#user_dashboard_main {
+  width: 590px;
+}
+
+#user_dashboard_sidebar {
+  float: right;
+  width: 280px;
+}
+
+#user_dashboard_column1,
+#user_dashboard_column2,
+#user_dashboard_column3 {
+  margin: 0 10px 10px 0;
+  width: 277px;
+}
+
+#user_dashboard_column1 {
+  
+}
+
+#user_dashboard_column2 {
+  
+}
+
+#user_dashboard_column3 {
+  margin-right: 0;
+}
+
+#user_dashboard_footer {
+  width: 892px;
+}
+
+.clear {
+  clear: both;
+}

@@ -1,0 +1,16 @@
+<?php
+
+/**
+ * @file
+ * Install hooks for devel image provider. 
+ */
+
+/**
+ * Implements hook_uninstall(). 
+ */
+function flickholdr_image_provider_uninstall() {
+  variable_del('devel_image_provider_flickholdr_bw');
+  variable_del('devel_image_provider_flickholdr_tags');
+  variable_del('devel_image_provider_flickholdr_seed');
+  variable_del('devel_image_provider_flickholdr_get_method');
+}

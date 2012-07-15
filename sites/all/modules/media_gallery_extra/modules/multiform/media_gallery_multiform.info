@@ -1,0 +1,11 @@
+name = Media Gallery Multiform
+description = Fixes incompatible Media Gallery dependency with Multiform module.
+core = 7.x
+package = Media
+
+; Information added by drupal.org packaging script on 2012-04-05
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "media_gallery_extra"
+datestamp = "1333585618"
+

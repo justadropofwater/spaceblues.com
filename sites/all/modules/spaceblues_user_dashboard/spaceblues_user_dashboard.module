@@ -1,0 +1,13 @@
+<?php
+/**
+ * Implementation of hook_user_dashboard_region_alter();
+ * see node @ http://drupal.org/node/1051938
+ */
+function spaceblues_user_dashboard_user_dashboard_region_alter(&$region) {
+  //add a clearing div after select user dashboard regions
+  if (in_array($region['#dashboard_region'], array('user_dashboard_sidebar', 'user_dashboard_column3'))) {
+    $region['#suffix'] = '<div class="clear"></div>';
+  }
+}
+
+?>

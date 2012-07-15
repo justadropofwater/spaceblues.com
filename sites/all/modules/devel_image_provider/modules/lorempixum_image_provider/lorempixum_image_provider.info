@@ -1,0 +1,11 @@
+name = Lorempixum Image Provider
+description = Add lorempixum as image provider in content generation
+package = Development
+core = 7.x
+dependencies[] = devel_image_provider
+; Information added by drupal.org packaging script on 2012-03-24
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "devel_image_provider"
+datestamp = "1332547922"
+

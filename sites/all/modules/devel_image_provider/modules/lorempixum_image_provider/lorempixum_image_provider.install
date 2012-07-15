@@ -1,0 +1,15 @@
+<?php
+
+/**
+ * @file
+ * Install hooks for devel image provider. 
+ */
+
+/**
+ * Implements hook_uninstall(). 
+ */
+function lorempixum_image_provider_uninstall() {
+  variable_del('devel_image_provider_lorempixum_gray');
+  variable_del('devel_image_provider_lorempixum_categories');
+  variable_del('devel_image_provider_lorempixum_get_method');
+}
