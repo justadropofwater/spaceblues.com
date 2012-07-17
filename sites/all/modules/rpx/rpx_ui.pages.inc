@@ -14,13 +14,12 @@ function rpx_user_identities($account) {
   $header = array(t('Account type'), t('Account ID'), t('Operations'));
   $rows = array();
 
-  $result = db_query("SELECT am.aid, authname, provider_name, provider_title FROM {authmap} am INNER JOIN {rpx_linked_account} la ON am.aid = la.aid WHERE module = :module AND uid = :uid", array(':module' => 'rpx_core', ':uid' => $account->uid));
-
-  foreach ($result as $identity) {
+  $result = rpx_user_get_identities($account->uid);
+  foreach ($result as $aid => $identity) {
     $rows[] = array(
-      theme('rpx_icon', array('provider' => $identity->provider_name, 'style' => 'rpx-icon-inline')) . '<span' . drupal_attributes(array('class' => 'rpx-provider-title')) . '>' . $identity->provider_title .  '</span>',
-      check_plain($identity->authname),
-      l(t('Delete'), 'user/' . $account->uid . '/rpx/delete/' . $identity->aid),
+      theme('rpx_icon', array('provider' => $identity['provider_name'], 'style' => 'rpx-icon-inline')) . '<span' . drupal_attributes(array('class' => 'rpx-provider-title')) . '>' . $identity['provider_title'] .  '</span>',
+      check_plain($identity['authname']),
+      l(t('Delete'), 'user/' . $account->uid . '/rpx/delete/' . $aid),
     );
   }
 
@@ -97,15 +96,14 @@ function rpx_user_identities($account) {
  * Menu callback; Delete the specified Engage identity from the system.
  */
 function rpx_user_delete_form($form, $form_state, $account, $aid = NULL) {
-  if (!$aid) {
+  if (is_null($aid)) {
     drupal_not_found();
     drupal_exit();
   }
-  $provider_title = db_query("SELECT provider_title FROM {authmap} am INNER JOIN {rpx_linked_account} la ON am.aid = la.aid WHERE uid = :uid AND am.aid = :aid AND module = 'rpx_core'", array(
-    ':uid' => $account->uid,
-    ':aid' => $aid,
-  ))
-  ->fetchField();
+
+  $ids = rpx_user_get_identities($account->uid);
+
+  $provider_title = isset($ids[$aid]['provider_title']) ? $ids[$aid]['provider_title'] : NULL;
 
   if (!$provider_title) {
     drupal_not_found();
@@ -125,54 +123,31 @@ function rpx_user_delete_form_submit($form, &$form_state) {
   $uid = $form_state['build_info']['args'][0]->uid;
   $aid = $form_state['build_info']['args'][1];
 
-  $linked_account = db_query("SELECT authname, provider_name, provider_title FROM {authmap} am INNER JOIN {rpx_linked_account} la ON am.aid = la.aid WHERE uid = :uid AND am.aid = :aid AND module = 'rpx_core'", array(
-    ':uid' => $uid,
-    ':aid' => $aid,
-  ))->fetchObject();
-
-  // Linked account data has to be deleted from two tables, so use a transaction.
-  $txn = db_transaction();
-  try {
-    $result1 = db_delete('authmap')
-      ->condition('uid', $uid)
-      ->condition('aid', $form_state['build_info']['args'][1])
-      ->condition('module', 'rpx_core')
-      ->execute();
-    $result2 = db_delete('rpx_linked_account')
-      ->condition('aid', $form_state['build_info']['args'][1])
-      ->execute();
-  }
-  catch (Exception $e) {
-    $txn->rollback();
-    watchdog_exception('rpx_ui', $e);
-  }
-
-  if (isset($result1) && isset($result2)) {
-    drupal_set_message(t('The linked %provider account has been successfully removed.', array('%provider' => $linked_account->provider_title)));
+  $ids = rpx_user_get_identities($uid);
+  if ($id = isset($ids[$aid]) ? $ids[$aid] : NULL) {
+    rpx_user_delete_authmaps(array($aid));
+    drupal_set_message(t('The linked %provider account has been successfully removed.', array('%provider' => $id['provider_title'])));
     // Save provider info for token replacement.
     $_SESSION['rpx_last_provider_info'] = array(
-      'name' => $linked_account->provider_name,
-      'title' => $linked_account->provider_title,
+      'name' => $id['provider_name'],
+      'title' => $id['provider_title'],
     );
     // Let other modules (e.g. rpx_rules) know that a linked account has been
     // removed.
     $user = user_load($uid);
     $account = array(
       'user' => $user,
-      'id' => $linked_account->authname,
-      'provider_machinename' => $linked_account->provider_name,
-      'provider_title' => $linked_account->provider_title,
+      'id' => $id['authname'],
+      'provider_machinename' => $id['provider_name'],
+      'provider_title' => $id['provider_title'],
     );
-    _rpx_delete_engage_mapping($linked_account->authname, $uid);
+    _rpx_delete_engage_mapping($id['authname'], $uid);
     module_invoke_all('rpx_linked_account', 'deleted', $account);
-  }
-  else {
-    drupal_set_message(t('We were unable to delete the linked %provider account.', array('%provider' => $linked_account->provider_title)), 'error');
-  }
 
-  // Let rpx_user_identities() know that the delete confirm_form has been
-  // used (so that it can work around http://drupal.org/node/1029458#comment-4055748).
-  $_SESSION['rpx_linked_account_deleted'] = TRUE;
+    // Let rpx_user_identities() know that the delete confirm_form has been
+    // used (so that it can work around http://drupal.org/node/1029458#comment-4055748).
+    $_SESSION['rpx_linked_account_deleted'] = TRUE;
+  }
 
   $form_state['redirect'] = 'user/' . $uid . '/rpx';
 }

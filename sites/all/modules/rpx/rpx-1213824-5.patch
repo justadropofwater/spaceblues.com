@@ -1,0 +1,442 @@
+From abd43dda070b2ed9a94c6940ef5ba896a3b1bdba Mon Sep 17 00:00:00 2001
+Message-Id: <abd43dda070b2ed9a94c6940ef5ba896a3b1bdba.1342000740.git.dmitriy.trt@gmail.com>
+From: "Dmitriy.trt" <dmitriy.trt@gmail.com>
+Date: Tue, 10 Jul 2012 22:07:08 +0700
+Subject: [PATCH] Issue #1213824: Support for ALL keyword instead of specific
+ index
+
+Also, adds support for overwriting/updating of multi-value fields
+and freeform lists by values fetched with ALL keyword.
+---
+ rpx_core.module  |  268 +++++++++++++++++++++++++++++++++++++++++++-----------
+ rpx_ui.admin.inc |   19 +++-
+ rpx_ui.module    |    4 +-
+ rpx_ui.paths.inc |    2 +-
+ 4 files changed, 232 insertions(+), 61 deletions(-)
+
+diff --git a/rpx_core.module b/rpx_core.module
+index 9c9564e..08e14b5 100644
+--- a/rpx_core.module
++++ b/rpx_core.module
+@@ -223,7 +223,7 @@ function rpx_core_form_user_register_form_alter(&$form, &$form_state) {
+       foreach (field_info_instances('profile2') as $bundle => $fields) {
+         foreach ($fields as $field => $array) {
+           if (isset($map[$bundle.$field]) && $mapped_value = _rpx_data_map($rpx_data, $map[$bundle.$field])) {
+-            $form['profile_' . $bundle][$field][LANGUAGE_NONE][0]['value']['#default_value'] = $mapped_value;
++            _rpx_entity_field_set_default_value($field, $mapped_value, $form['profile_' . $bundle], $form_state);
+           }
+         }
+       }
+@@ -246,13 +246,77 @@ function rpx_core_form_user_register_form_alter(&$form, &$form_state) {
+     foreach (field_info_instances('user') as $bundle => $fields) {
+       foreach ($fields as $field => $array) {
+         if (isset($map[$field]) && $mapped_value = _rpx_data_map($rpx_data, $map[$field])) {
+-          $form[$field][LANGUAGE_NONE][0]['value']['#default_value'] = $mapped_value;
++          _rpx_entity_field_set_default_value($field, $mapped_value, $form, $form_state);
+         }
+       }
+     }
+   }
+ }
+ 
++function _rpx_entity_field_set_default_value($field_name, $mapped_value, &$form, &$form_state) {
++  if (!isset($form[$field_name]['#language'])) {
++    return;
++  }
++  $field_info = field_info_field($field_name);
++  $langcode = $form[$field_name]['#language'];
++  $field = $form[$field_name][$langcode];
++
++  // Extract entity type, entity and bundle from the widget.
++  if (!empty($field[0]['#entity'])) {
++    $widget = $field[0];
++  }
++  elseif (!empty($field[0]['value']['#entity'])) {
++    $widget = $field[0]['value'];
++  }
++  elseif (!empty($field['#entity'])) {
++    $widget = $field;
++  }
++  else {
++    return;
++  }
++  $entity = $widget['#entity'];
++  $entity_type = $widget['#entity_type'];
++  $bundle_name = $widget['#bundle'];
++  
++  if ($field_info['cardinality'] != 1 && is_array($mapped_value) && count($mapped_value) > 1) {
++    // For multi-value fields and multi-value defaults we have to rebuild the
++    // field from scratch.
++    $items = array();
++    foreach ($mapped_value as $value) {
++      $items[] = array(
++        'value' => $value,
++      );
++
++      if ($field_info['cardinality'] != -1 && count($items) >= $field_info['cardinality']) {
++        break;
++      }
++    }
++    
++    // Update the number of items in the field state if it is set, otherwise it
++    // will be initialized with the number of items by field_default_form().
++    $parents = $form['#parents'];
++    $field_state = field_form_get_state($parents, $field_name, $langcode, $form_state);
++    if ($field_state) {
++      $field_state['items_count'] = count($items);
++      field_form_set_state($parents, $field_name, $langcode, $form_state, $field_state);
++    }
++
++    // Rebuild the field widgets and overwrite existing elements with the new ones.
++    $instance_info = field_info_instance($entity_type, $field_name, $bundle_name);
++    $result = field_default_form($entity_type, $entity, $field_info, $instance_info, $langcode, $items, $form, $form_state);
++    if ($result) {
++      $form = array_merge($form, $result);
++    }
++  }
++  else {
++    // Single-value field or just
++    if (is_array($mapped_value)) {
++      $mapped_value = implode(", ", $mapped_value);
++    }
++    $form[$field_name][$langcode][0]['value']['#default_value'] = $mapped_value;
++  }
++}
++
+ /**
+  * Custom submit handler for the standard user_register form.
+  */
+@@ -437,6 +501,26 @@ function _rpx_core_extract_data($data, $path) {
+         return _rpx_core_extract_data($value, $path);
+       }
+     }
++    elseif ($key === 'ALL' && is_array($data)) {
++      // Collect all values from array.
++      $result = array();
++      foreach ($data as $item) {
++        $item_data = empty($path) ? $item : _rpx_core_extract_data($item, $path);
++        if ($item_data !== '') {
++          if (is_array($item_data)) {
++            // Multiple ALL keywords exist in path, merge values into single array.
++            $result = array_merge($result, $item_data);
++          }
++          else {
++            $result[] = $item_data;
++          }
++        }
++      }
++      if (!empty($result)) {
++        // Don't return empty array, caller expects empty string if value doesn't exists.
++        return $result;
++      }
++    }
+   }
+   return '';
+ }
+@@ -672,10 +756,19 @@ function _rpx_import_user_data($account) {
+ 
+     // If data append is requested, make sure it's a multi-value field.
+     if ($mapping['update'] == RPX_UPDATE_ADD) {
+-      $field_info = field_info_field($mapping['field']);
+-      if (!isset($field_info['cardinality']) || $field_info['cardinality'] == 1) {
+-        watchdog('rpx_core', 'Refusing to append new data to a single-value field %field_name.', array('%field_name' => $mapping['field']), WATCHDOG_WARNING);
+-        continue;
++      if ($mapping['set'] === 'profile') {
++        if (isset($profile_fields[$mapping['field']]->type) && $profile_fields[$mapping['field']]->type !== 'list') {
++          watchdog('rpx_core', 'Refusing to append new data to a single-value profile field %field_name.', array('%field_name' => $mapping['field']), WATCHDOG_WARNING);
++          continue;
++        }
++      }
++      else {
++        // Profile2 & User fields.
++        $field_info = field_info_field($mapping['field']);
++        if (!isset($field_info['cardinality']) || $field_info['cardinality'] == 1) {
++          watchdog('rpx_core', 'Refusing to append new data to a single-value field %field_name.', array('%field_name' => $mapping['field']), WATCHDOG_WARNING);
++          continue;
++        }
+       }
+     }
+ 
+@@ -716,6 +809,10 @@ function _rpx_import_user_data($account) {
+         ->condition('uid', $account->uid)
+         ->execute()
+         ->fetchField();
++      if ($old_value && _profile_field_serialize($field->type)) {
++        // Unserialize complicated data.
++        $old_value = unserialize($old_value);
++      }
+ 
+       if ($mapping['update'] == RPX_UPDATE_EMPTY) {
+         // Make sure the field is empty.
+@@ -730,12 +827,27 @@ function _rpx_import_user_data($account) {
+         continue;
+       }
+ 
++      // If data append is requested it's a freeform list (see above code).
++      if ($mapping['update'] == RPX_UPDATE_ADD) {
++        // Merge old list with the new one and get unique values.
++        $old_list = $old_value ? preg_split('/[\,\n\r]/', $old_value, -1, PREG_SPLIT_NO_EMPTY) : array();
++        $new_list = preg_split('/[\,\n\r]/', $new_value, -1, PREG_SPLIT_NO_EMPTY);
++        $result_list = array();
++        // Can't use array_unique() here because we need case-insensitive comparison.
++        foreach (array_merge($old_list, $new_list) as $item) {
++          if ($item = trim($item)) {
++            // Store lowercase value in array key.
++            $lowercase_item = drupal_strtolower($item);
++            if (!isset($result_list[$lowercase_item])) {
++              $result_list[$lowercase_item] = $item;
++            }
++          }
++        }
++        $new_value = implode("\n", $result_list);
++      }
++
+       // Import the data.
+       if ($old_value !== FALSE) {
+-        if (_profile_field_serialize($field->type)) {
+-          // Unserialize complicated data to compare with new value
+-          $old_value = unserialize($old_value);
+-        }
+         if ($old_value != $new_value) {
+           db_update('profile_value')
+             ->fields(array('value' => _profile_field_serialize($field->type) ? serialize($new_value) : $new_value))
+@@ -778,51 +890,10 @@ function _rpx_import_user_data($account) {
+         continue;
+       }
+ 
+-      $values = &$entity->{$mapping['field']}[LANGUAGE_NONE];
+-
+-      if ($mapping['update'] == RPX_UPDATE_EMPTY) {
+-        // Make sure the field is empty.
+-        if(isset($values[0]['value'])) {
+-          continue;
+-        }
+-      }
+-
+-      //
+-      // Import the data (profile2 and user entity types).
+-      //
+-      if($mapping['update'] == RPX_UPDATE_ADD) {
+-        // If we are appending to a multi-value field, make sure it can accept
+-        // another value.
+-        if ($field_info['cardinality'] != -1 && count($values) >= $field_info['cardinality']) {
+-          watchdog('rpx_core', 'Refusing to append new data: multi-value field %field_name can\'t accept another value.', array('%field_name' => $mapping['field']), WATCHDOG_WARNING);
+-          continue;
+-        }
+-        elseif ($values) {
+-          // Make sure $new_data value isn't already there.
+-          $exists = FALSE;
+-          foreach ($values as $value) {
+-            if (!strcmp($value['value'], $new_data)) {
+-              $exists = TRUE;
+-              break;
+-            }
+-          }
+-          if ($exists) {
+-            continue;
+-          }
+-          else {
+-            $slot = count($values);
+-          }
+-        }
+-        else {
+-          // Field has no values.
+-          $slot = 0;
+-        }
+-      }
+-      else {
+-        $slot = 0;
++      // Set new data to the entity and save changes.
++      if (!_rpx_entity_set_data($entity, $mapping, $new_data)) {
++        continue;
+       }
+-
+-      $values[$slot]['value'] = $new_data;
+       field_attach_update($entity_type, $entity);
+     }
+ 
+@@ -840,6 +911,84 @@ function _rpx_import_user_data($account) {
+ }
+ 
+ /**
++ * Sets/adds new value(-s) to the entity.
++ *
++ * @param object $entity
++ *   Profile2 or User object.
++ * @param array $mapping
++ * @param mixed $new_data
++ *
++ * @return bool
++ *   TRUE when value has been set/added, FALSE if this field should be skipped.
++ */
++function _rpx_entity_set_data(&$entity, $mapping, $new_data) {
++  $field_info = field_info_field($mapping['field']);
++  $values = &$entity->{$mapping['field']}[LANGUAGE_NONE];
++
++  if ($mapping['update'] == RPX_UPDATE_EMPTY) {
++    // Make sure the field is empty.
++    if (isset($values[0]['value'])) {
++      return FALSE;
++    }
++  }
++
++  if ($field_info['cardinality'] == 1) {
++    // For single-value fields join multiple values with a comma.
++    if (is_array($new_data)) {
++      $new_data = implode(", ", $new_data);
++    }
++    $values = array();
++    $values[0]['value'] = $new_data;
++  }
++  else {
++    // For multi-value fields the value must be an array.
++    $new_data = (array) $new_data;
++
++    // Build array of new values keyed by lowercase values.
++    $keys = array_map('drupal_strtolower', $new_data);
++    $new_values = array_combine($keys, $new_data);
++
++    if ($mapping['update'] == RPX_UPDATE_ADD) {
++      if ($field_info['cardinality'] != -1 && count($values) >= $field_info['cardinality']) {
++        watchdog('rpx_core', 'Refusing to append new data: multi-value field %field_name can\'t accept another value.', array('%field_name' => $mapping['field']), WATCHDOG_WARNING);
++        return FALSE;
++      }
++
++      // Remove existing values from the list of new values.
++      foreach ($values as $value) {
++        $lower_value = drupal_strtolower($value['value']);
++        if (isset($new_values[$lower_value])) {
++          unset($new_values[$lower_value]);
++        }
++      }
++
++      // Skip this field if all new values already exist.
++      if (empty($new_values)) {
++        return FALSE;
++      }
++
++      // Add new values after existing ones.
++      $slot = count($values);
++    }
++    else {
++      $slot = 0;
++      $values = array();
++    }
++
++    foreach ($new_values as $new_value) {
++      $values[$slot++]['value'] = $new_value;
++
++      if ($field_info['cardinality'] != -1 && count($values) >= $field_info['cardinality']) {
++        watchdog('rpx_core', 'New data has been truncated: multi-value field %field_name can\'t accept another value.', array('%field_name' => $mapping['field']), WATCHDOG_WARNING);
++        break;
++      }
++    }
++  }
++
++  return TRUE;
++}
++
++/**
+  * Retrieve profile fields meta-information for selected fields.
+  *
+  * @param array $names
+@@ -895,6 +1044,15 @@ function _rpx_profile_get_fields($names = array(), $reg_form = FALSE) {
+  *   Mixed formatted value or NULL if formatting isn't possible.
+  */
+ function _rpx_profile_format_value($field, $value) {
++  if (is_array($value)) {
++    if ($field->type == 'list') {
++      $value = implode("\n", $value);
++    }
++    else {
++      $value = implode(", ", $value);
++    }
++  }
++
+   switch ($field->type) {
+     case 'date':
+       if (!preg_match('/^(\d{4})\-(\d{2})\-(\d{2})$/', $value, $parsed_date)) {
+@@ -923,7 +1081,7 @@ function _rpx_profile_format_value($field, $value) {
+       return NULL;
+ 
+     default:
+-      // single, multi-line text and URL fields
++      // single, multi-line text, URL and freeform list fields
+       return $value;
+   }
+ }
+diff --git a/rpx_ui.admin.inc b/rpx_ui.admin.inc
+index 3e257ff..1cf6382 100644
+--- a/rpx_ui.admin.inc
++++ b/rpx_ui.admin.inc
+@@ -849,6 +849,9 @@ function _rpx_parse_path($path) {
+       if (is_numeric($part)) {
+         $parsed[] = intval($part);
+       }
++      elseif ($part === 'ALL') {
++        $parsed[] = 'ALL';
++      }
+       elseif (preg_match("/^\'([a-z0-9_]+)\'$/i", $part, $matches)) {
+         $parsed[] = $matches[1];
+       }
+@@ -1075,9 +1078,19 @@ function rpx_profile_mapping_edit_form_submit($form, &$form_state) {
+   // Warn user if he tries to configure the mapping to append new data to a
+   // single value field.
+   if ($update == RPX_UPDATE_ADD) {
+-    $field_info = field_info_field($mapping['field']);
+-    if (!isset($field_info['cardinality']) || $field_info['cardinality'] == 1) {
+-      drupal_set_message(t('The field cannot accept multiple values.'), 'warning');
++    switch ($mapping['set']) {
++      case 'profile':
++        $profile_fields = _rpx_profile_get_fields(array($mapping['field']));
++        if (isset($profile_fields[$mapping['field']]->type) && $profile_fields[$mapping['field']]->type !== 'list') {
++          drupal_set_message(t('The field cannot accept multiple values.'), 'warning');
++        }
++        break;
++
++      default: // Profile2 & User fields.
++        $field_info = field_info_field($mapping['field']);
++        if (!isset($field_info['cardinality']) || $field_info['cardinality'] == 1) {
++          drupal_set_message(t('The field cannot accept multiple values.'), 'warning');
++        }
+     }
+   }
+ 
+diff --git a/rpx_ui.module b/rpx_ui.module
+index 76df216..049f6d7 100644
+--- a/rpx_ui.module
++++ b/rpx_ui.module
+@@ -329,7 +329,7 @@ function _rpx_drupal_field_catalog() {
+ 
+   // Build an array containing the fields defined by the Profile core module.
+   if (module_exists('profile')) {
+-    $result = db_query("SELECT fid, title, name FROM {profile_field} WHERE type IN ('textfield', 'textarea', 'url', 'date', 'selection') ORDER BY weight, title", array());
++    $result = db_query("SELECT fid, title, name FROM {profile_field} WHERE type IN ('textfield', 'textarea', 'url', 'date', 'selection', 'list') ORDER BY weight, title", array());
+     $fields = array();
+     while ($row = $result->fetchObject()) {
+       $fields[$row->name] = $row->title;
+@@ -506,7 +506,7 @@ function rpx_ui_help($path, $arg) {
+       $output .= '</dl>';
+       return $output;
+     case 'admin/config/people/rpx/mapping':
+-      return '<p>' . t('This page displays the mapping of Drupal profile fields (either <em>User</em> fields or those created using the <em>Profile</em> and <em>Profile2</em> modules) to the 3rd party user profile data returned by Engage. This mapping is used to pre-fill configured Drupal profile fields at user signup and to import the data when user signs in using (or links) a 3rd party account. You can add a new mapping or edit/delete an existing one.') . '</p><p>'. t('Create an Engage data field to map to (on the <em>Manage Fields</em> tab), then select it from the dropdown menu below and select the Drupal profile field that should be mapped to the Engage data. Currently only 5 Drupal <em>Profile</em> field types are supported: single-line text, multi-line text, URL, list selection and date; <em>Profile2</em> and <em>User</em> fields support is limited to text fields.') . '</p>';
++      return '<p>' . t('This page displays the mapping of Drupal profile fields (either <em>User</em> fields or those created using the <em>Profile</em> and <em>Profile2</em> modules) to the 3rd party user profile data returned by Engage. This mapping is used to pre-fill configured Drupal profile fields at user signup and to import the data when user signs in using (or links) a 3rd party account. You can add a new mapping or edit/delete an existing one.') . '</p><p>'. t('Create an Engage data field to map to (on the <em>Manage Fields</em> tab), then select it from the dropdown menu below and select the Drupal profile field that should be mapped to the Engage data. Currently only 6 Drupal <em>Profile</em> field types are supported: single-line text, multi-line text, URL, list selection, date and freeform list; <em>Profile2</em> and <em>User</em> fields support is limited to text fields.') . '</p>';
+   case 'admin/config/people/rpx/fields':
+     $help = '<p>' . t('Here you can create new fields that can be used on the <em>Field Mapping</em> tab. You can also edit or delete existing fields.') . '</p>';
+     if (!module_exists('token')) {
+diff --git a/rpx_ui.paths.inc b/rpx_ui.paths.inc
+index 791ad84..105766f 100644
+--- a/rpx_ui.paths.inc
++++ b/rpx_ui.paths.inc
+@@ -11,7 +11,7 @@
+  * @see theme_rpx_path_tree()
+  */
+ function _rpx_paths() {
+-  $ordinal_description = t('Replace question mark with a number (negative number means "n-th from the end").');
++  $ordinal_description = t('Replace question mark with a number (negative number means "n-th from the end") or ALL keyword to get data from every item.');
+ 
+   $paths = array(
+     array(
+-- 
+1.7.10.4
+

@@ -1,0 +1,129 @@
+<?php
+
+/**
+ * @file
+ * Tests for geofield.module.
+ */
+
+class GeoFieldTestCase extends FieldTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name'  => 'Geofield',
+      'description'  => "Test the creation of geofields.",
+      'group' => 'Field types'
+    );
+  }
+
+  function setUp() {
+    parent::setUp(array('geofield', 'field_test'));
+
+    $this->admin_user = $this->drupalCreateUser(array('administer filters'));
+    $this->web_user = $this->drupalCreateUser(array('access field_test content', 'administer field_test content', 'administer modules'));
+    $this->drupalLogin($this->web_user);
+  }
+
+  // Test fields.
+
+  /**
+   * Test lat/lon Input.
+   */
+  function testGeofieldFieldLatLonWidget() {
+    // Test lat/lon widget
+    $this->_testGeoFieldAPISetup('geofield_latlon');
+    // Display creation form.
+    $langcode = LANGUAGE_NONE;
+    $this->drupalGet('test-entity/add/test-bundle');
+    $this->assertFieldByName("{$this->field_name}[$langcode][0][widget][lat]", '', t('Widget [lat] is displayed'));
+    $this->assertFieldByName("{$this->field_name}[$langcode][0][widget][lon]", '', t('Widget [lon] is displayed'));
+    $this->assertNoFieldByName("{$this->field_name}[$langcode][0][widget]", '', t("Widget [widget] isn't displayed with latlon widget"));
+
+    // Submit with some value.
+    include_once(drupal_get_path('module', 'geofield') . '/includes/GeoGenerator.php');
+    $generator = new GeoGenerator();
+    $point = $generator->random_point();
+    $edit = array(
+      "{$this->field_name}[$langcode][0][widget][lat]" => $point[1],
+      "{$this->field_name}[$langcode][0][widget][lon]" => $point[0],
+    );
+    $this->drupalPost(NULL, $edit, t('Save'));
+    preg_match('|test-entity/manage/(\d+)/edit|', $this->url, $match);
+    $id = $match[1];
+    $this->assertRaw(t('test_entity @id has been created.', array('@id' => $id)), t('Entity was created'));
+
+    // Display the entity.
+    $entity = field_test_entity_test_load($id);
+    $entity->content = field_attach_view('test_entity', $entity, 'full');
+    $this->content = drupal_render($entity->content);
+    geophp_load();
+    $geometry = new Point($point[0], $point[1]);
+    $value = $geometry->out('wkt');
+    $this->assertText($value, 'WKT output for lat/lon widget is correct.');
+  }
+
+  /**
+   * Helper function for testGeofieldWidgets().
+   */
+  function _testGeoFieldAPISetup($widget_type) {
+    // Setup a field and instance
+    $entity_type = 'test_entity';
+    $this->field_name = drupal_strtolower($this->randomName());
+    $this->field = array('field_name' => $this->field_name, 'type' => 'geofield');
+    field_create_field($this->field);
+    $this->instance = array(
+      'field_name' => $this->field_name,
+      'entity_type' => 'test_entity',
+      'bundle' => 'test_bundle',
+      'label' => $this->randomName() . '_label',
+      'settings' => array(
+      ),
+      'widget' => array(
+        'type' => $widget_type,
+      ),
+      'display' => array(
+        'full' => array(
+          'type' => 'geofield_wkt',
+        ),
+      ),
+    );
+    field_create_instance($this->instance);
+  }
+}
+
+class GeoFieldElementTestCase extends DrupalWebTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Geofield FormAPI Elements',
+      'description' => "Test Geofield FormAPI elements.",
+      'group' => 'Form API',
+    );
+  }
+
+  function setUp() {
+    parent::setUp(array('geofield', 'geofield_test', 'geocoder'));
+
+    $this->web_user = $this->drupalCreateUser(array('access content'));
+    $this->drupalLogin($this->web_user);
+  }
+
+  function testGeofieldLatLonElement() {
+    // Test form element rendering
+    $this->drupalGet('geofield-latlon-element');
+    $this->assertFieldById('edit-geofield-latlon-simple-lat', '', 'Latitude element for simple geofield exists.');
+    $this->assertFieldById('edit-geofield-latlon-simple-lon', '', 'Longitude element for simple geofield exists.');
+
+    $this->assertFieldById('edit-geofield-latlon-verbose-lat', 41, 'Latitude element for verbose geofield exists.');
+    $this->assertFieldById('edit-geofield-latlon-verbose-lon', -86, 'Longitude element for verbose geofield exists.');
+
+    // Test form element submission.
+    $edit = array();
+    $edit['geofield_latlon_simple[lat]'] = 41;
+    $edit['geofield_latlon_simple[lon]'] = -86;
+    $edit['geofield_latlon_verbose[lat]'] = 25;
+    $edit['geofield_latlon_verbose[lon]'] = 54;
+    $this->drupalPost('geofield-latlon-element', $edit, t('Save'));
+    $this->assertText('Simple - Lat: 41 Lon: -86', "Simple Geofield saved data as expected");
+    $this->assertText('Verbose - Lat: 25 Lon: 54', "Verbose Geofield saved data as expected");
+  }
+}

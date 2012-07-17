@@ -5,7 +5,37 @@
         <div id="header-wrapper">
             <div id="header">
                     
-                <div id="user-menu-and-feed">
+       
+                
+                <div style="clear:both"></div>
+                
+                <div id="menu-and-search">
+                    
+                    <div id="menu-left"></div>
+
+                    <div class="menu-wrapper">
+                                    
+                                    <div id="home-link" style="float:left;"> 
+                                        <a href="<?php print $base_path ?>" title="<?php print t('home') ?>" > <img src="<?php print $base_path . $directory; ?>/images/home.png" alt="<?php print t('home') ?>" /> </a>
+                                    </div>
+                                    
+                                  <!--
+  <?php if ($main_menu || $page['superfish_menu']): ?>
+                                        <div id="<?php print $main_menu ? 'nav': 'superfish'; ?>">
+                                            <div id="menu-separator"></div>
+                                             <?php 
+                                                if ($main_menu):
+                                                print theme('links__system_main_menu', array('links' => $main_menu));
+                                                elseif (!empty($page['superfish_menu'])):
+                                                print render($page['superfish_menu']);
+                                                endif;
+                                             ?>
+                                        </div>
+                                    <?php endif; ?>
+-->
+
+
+         <div id="user-menu-and-feed">
                     
                     <div id="user-menu">
                       
@@ -23,7 +53,9 @@
                                             array(
                                                 'style_name' => 'user_avatar_header',
                                                 'path' => $user->picture->uri,
-                                                'alt' =>  $alt,
+                                                //'alt' =>  $alt,
+                                                'width' => NULL,
+                                                'height' => NULL,
                                                 'attributes' => array(
                                                                     'class' => 'avatar'
                                                                 )            
@@ -46,8 +78,8 @@
                                           )
                                         );
                                 else:
-                                    print '<li class="first">' . t('login is ') . ' <a href="' . url('user') . '">' . t('here') . '</a></li>';
-                                    print '<li class="last"> <a href="' . url('user/register') . '">' . t('register') . '</a></li>';
+                                    print '<div class="login">' . t('login is ') . ' <a href="' . url('user') . '">' . t('here') . '</a></div>';
+                                    print '<div class="register"> <a href="' . url('user/register') . '">' . t('register') . '</a></div>';
                                     endif;
                             ?>                
                         
@@ -57,49 +89,24 @@
                         <div class="feed-wrapper">
                             <?php print $feed_icons; ?>
                         </div>
-                    <?php endif; ?><!--end of rss feed-->
+                    <?php endif; ?>
                 
-                </div><!--end of user-menu and feed icon-->
-                
-                <div style="clear:both"></div>
-                
-                <div id="menu-and-search">
-                    
-                    <div id="menu-left"></div>
+                </div>
 
-                    <div class="menu-wrapper">
-                                    
-                                    <div id="home-link" style="float:left;"> <!--this is a home link with an image, you can disable it with delete this or change the image in images directory. just enjoy it:D -->
-                                        <a href="<?php print $base_path ?>" title="<?php print t('home') ?>" > <img src="<?php print $base_path . $directory; ?>/images/home.png" alt="<?php print t('home') ?>" /> </a>
-                                    </div>
-                                    
-                                    <?php if ($main_menu || $page['superfish_menu']): ?>
-                                        <div id="<?php print $main_menu ? 'nav': 'superfish'; ?>">
-                                            <div id="menu-separator"></div>
-                                             <?php 
-                                                if ($main_menu):
-                                                print theme('links__system_main_menu', array('links' => $main_menu));
-                                                elseif (!empty($page['superfish_menu'])):
-                                                print render($page['superfish_menu']);
-                                                endif;
-                                             ?>
-                                        </div><!--end of menu-->
-                                    <?php endif; ?>
                                         
                                 <?php if ($page['search_box']): ?>
                                     <div id="search-box">
                                         <?php print render($page['search_box']); ?>
                                     </div>
-                                <?php endif; ?><!--this is a search box-->
-                                                                
+                                <?php endif; ?>                                                                
                     </div>
                     
                     <div id="menu-right"></div>
                     
-                </div><!--end of menu and search-box-->
+                </div>
                 
             </div>
-        </div><!--end of header-->
+        </div>
            
         <div id="container-wrapper">
                                
@@ -109,15 +116,16 @@
                                 <?php print $breadcrumb; ?>
                             </div>
                         <?php endif; ?>
-                    <?php endif; ?><!--end of breadcrumb-->
-               
-            <div id="container-outer">    
+                    <?php endif; ?>
+                                <div id="container-outer">    
                     
                 <div class="top-shadow"></div>        
-                <div class="middle-shadow"><!--this is a background of container,consist of top-shadow middle-shadow and bottom-shadow, i create it for two other regions, in bottom-teaser and bottom-wrapper, so it's all connected, just edit this and two other will automatically changed, enjoy it:D-->
-                <div class="middle-fix"><!--this is to fix container of middle shadow-->
+                <div class="middle-shadow">
                 
-                    
+                
+            
+                <div class="middle-fix">
+                                    
                     <?php if ($page['sidebar_first']): ?>
                         <div id="sidebar-left-wrapper">
                                 <div id="sidebar-left" class="sidebar">
@@ -137,8 +145,8 @@
                         <?php if ($page['content']): ?><div id="content-middle"><?php print render($page['content']); ?></div><?php endif; ?>
                         <?php if ($page['content_bottom']): ?><div id="content-bottom"><?php print render($page['content_bottom']); ?></div><?php endif; ?>
 
-                    </div><!--this is main content, you can edit this if you want to change arange of main content-->
-                        
+                    </div>
+                    
                         
                     <?php if ($page['sidebar_second']): ?>
                         <div id="sidebar-right-wrapper">
@@ -166,8 +174,8 @@
             <div class="middle-fix">
                 
                 <div class="triplet-wrapper in<?php print (bool) $page['bottom_first'] + (bool) $page['bottom_middle'] + (bool) $page['bottom_last']; ?>">
-                <div class="separator-fix"><!-- this is to create separator between column, just for bottom teaser and bottom wrapper-->    
-                
+                <div class="separator-fix">
+                                
                 <?php if($page['bottom_first']): ?>
                     <div class="column A">
                         <?php print render($page['bottom_first']); ?>
@@ -225,7 +233,7 @@
                     <div class="column C">
                         <?php print render($page['bottom_3']); ?>
                     </div>
-                <?php endif; ?><!--whitebull have many column, its divided by three section, preface column,bottom teaser,and bottom wrapper. every section have a group, column A column B or column C. you can edit it for every section , every group , or maybe every single column . modified it is easy:D -->
+                <?php endif; ?>
                         
                 <div style="clear:both"></div>
                 </div><!--end of separatir fix-->
@@ -235,7 +243,7 @@
                     <div class="bottom-note note">
                         <?php print render($page['bottom_note']); ?>
                     </div>
-                <?php endif; ?><!--this is a bottom note, in whitebull there are three note(plus 1 note for drupal 7 version), top note,slideshow note and bottom note(plus footer note). use it with your own stuff:D -->
+                <?php endif; ?>
                 
             </div><!--end of middle fix-->    
                 <div style="clear:both"></div>
@@ -251,9 +259,10 @@
                 <div class="footer-note note footer-message">
                     <?php print render($page['footer_note']); ?>
                 </div>
-            <?php endif; ?><!--this is another note, i give it for drupal 7 version, just enjoy it-->
-
-                        <div style="clear:both"></div>
+            <?php endif; ?>
+            
+            
+                                    <div style="clear:both"></div>
 
             <div class="footer">
                 <?php print render($page['footer']); ?>
@@ -261,7 +270,7 @@
                 
             <div id="notice">
                 <div class="notice" style="font-size:11px;font-style: italic;float: left;margin-left: 2px;">Copyright 2012 spaceblues.com</div>
-            </div><!--this is a notice,the banner of me, Gunawan Probo Swandono (a.k.a igoen)-->
+            </div>
             
             <div style="clear:both"></div>
             

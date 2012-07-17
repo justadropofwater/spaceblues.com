@@ -9,7 +9,7 @@
  * @see http://www.janrain.com/products/engage
  */
 
-define('RPX_MODULE_VERSION', '7.x-2.2');
+define('RPX_MODULE_VERSION', '7.x-2.3-dev');
 
 /*
  * Engage data update options.
@@ -93,7 +93,7 @@ function rpx_core_form_user_register_form_alter(&$form, &$form_state) {
   $profile = $rpx_data['profile'];
 
   // Use the nickname returned by Engage.
-  $form['account']['name']['#default_value'] = $profile['displayName'];
+  $form['account']['name']['#default_value'] = $profile['preferredUsername'];
   $mail = '';
   if (!empty($profile['verifiedEmail'])) {
     $mail = $profile['verifiedEmail'];
@@ -317,6 +317,7 @@ function rpx_user_register_submit($form, &$form_state) {
 
     _user_mail_notify('register_no_approval_required', $account);
     $form_state['uid'] = $account->uid;
+
     user_login_submit(array(), $form_state);
     drupal_set_message(t('Registration successful. You are now logged in.'));
   }
@@ -329,6 +330,7 @@ function rpx_user_register_submit($form, &$form_state) {
     _user_mail_notify('register_pending_approval', $account);
     drupal_set_message(t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.<br />In the meantime, a welcome message with further instructions has been sent to your e-mail address.'));
   }
+
   $form_state['redirect'] = '';
 }
 
@@ -503,32 +505,12 @@ function rpx_core_user_insert(&$edit, $account, $category) {
     return;
   }
 
-  $profile = $rpx_data['profile'];
-
-  // Since we are inserting in two tables (authmap and rpx_linked_account),
-  // use a transaction.
-  $txn = db_transaction();
-  try {
-    user_set_authmaps($account, array('authname_rpx_core' => $profile['identifier']));
-    if (module_exists('rpx_ui')) {
-      // Get the new authmap ID and insert it in the rpx_linked_account table
-      $aid = db_query('SELECT aid FROM {authmap} WHERE authname = :id', array('id' => $profile['identifier']))->fetchField();
-      db_insert('rpx_linked_account')
-        ->fields(array(
-          'aid' => $aid,
-          'provider_name' => $_SESSION['rpx_last_provider_info']['name'],
-          'provider_title' => $_SESSION['rpx_last_provider_info']['title'],
-        ))
-        ->execute();
-    }
+  if (rpx_user_set_authmaps($account)) {
+    _rpx_update_engage_mapping($account->uid);
   }
-  catch (Exception $e) {
-    $txn->rollback();
-    watchdog_exception('rpx_core', $e);
-    return;
+  else {
+    drupal_set_message(t('Failed to link your %provider account.', array('%provider' => $rpx_data['profile']['providerName'])), 'error');
   }
-
-  _rpx_update_engage_mapping($account->uid);
 }
 
 /**
@@ -604,9 +586,13 @@ function _rpx_providers($entire_list = FALSE) {
  *   The provider's machine name if it is known; "other" otherwise.
  */
 function _rpx_get_provider_machine_name($title) {
-  $entire_list = TRUE;
-  $providers = _rpx_providers($entire_list);
-  $providers = array_flip($providers);
+  $providers = &drupal_static(__FUNCTION__);
+
+  if (!isset($providers)) {
+    $entire_list = TRUE;
+    $providers = _rpx_providers($entire_list);
+    $providers = array_flip($providers);
+  }
 
   return isset($providers[$title]) ? $providers[$title] : 'other';
 }
@@ -992,6 +978,168 @@ function _rpx_delete_engage_mapping($authname, $uid, $all = FALSE) {
 
   if ($result['stat'] != 'ok') {
     watchdog('rpx_core', 'Call to Engage unmap failed for user ID %uid and Engage ID %rpx_id; unmap() returned error: %err', array('%uid' => $uid, '%rpx_id' => $authname, '%err' => $result['err']['msg']), WATCHDOG_WARNING);
+  }
+}
+
+/**
+ * Helper function: link an Engage identifier to a user by saving the former in
+ * a mapping database.
+ *
+ * Some modules want to store all PII (personally identifiable information),
+ * including the external ID's, in a separate database. We let them do it using
+ * hook_rpx_authmap_insert(). If no module implements the hook, we use the
+ * Drupal authmap table.
+ *
+ * @param array $account
+ *   Drupal user account the Engage identifier should map to.
+ * @return
+ *   TRUE on success; FALSE on failure.
+ */
+function rpx_user_set_authmaps($account) {
+  $rpx_data = rpx_core_get_rpx_session();
+  $profile = $rpx_data['profile'];
+  $rpx_id = $profile['identifier'];
+  $provider = _rpx_get_provider_machine_name($profile['providerName']);
+
+  if (module_implements('rpx_authmap_insert')) {
+    // Let integration modules store the mapping in their own database.
+    try {
+      module_invoke_all('rpx_authmap_insert', $account->uid, $rpx_id, $provider);
+    }
+    catch (Exception $e) {
+      watchdog_exception('rpx_core', $e);
+      return FALSE;
+    }
+  }
+  else {
+    $txn = db_transaction();
+    try {
+      // We don't use user_set_authmaps() here, since it doesn't support
+      // multiple authnames per user via same module.
+      $aid = db_insert('authmap')
+        ->fields(array(
+          'uid' => $account->uid,
+          'authname' => $rpx_id,
+          'module' => 'rpx_core',
+        ))
+        ->execute();
+      // rpx_linked_account table is created by the rpx_ui module.
+      if (module_exists('rpx_ui')) {
+        db_insert('rpx_linked_account')
+          ->fields(array(
+            'aid' => $aid,
+            'provider_name' => $_SESSION['rpx_last_provider_info']['name'],
+            'provider_title' => $_SESSION['rpx_last_provider_info']['title'],
+          ))
+          ->execute();
+      }
+    }
+    catch (Exception $e) {
+      $txn->rollback();
+      watchdog_exception('rpx_core', $e);
+      return FALSE;
+    }
+    // Let other modules (e.g. rpx_rules) know that a linked account has been
+    // added.
+    $account = array(
+      'user' => $account,
+      'id' => $rpx_id,
+      'provider_machinename' => $_SESSION['rpx_last_provider_info']['name'],
+      'provider_title' => $_SESSION['rpx_last_provider_info']['title'],
+    );
+    module_invoke_all('rpx_linked_account', 'added', $account);
+  }
+  return TRUE;
+}
+
+/**
+ * Helper function: wrap user_external_load() to support storing the authmap
+ * in a separate table/database.
+ *
+ * @see rpx_user_set_authmaps().
+ *
+ * @param string $authname: The external authentication username.
+ * @return
+ *   A fully-loaded user object if the user is found or FALSE if not found.
+ */
+function rpx_user_external_load($authname) {
+  if (module_implements('rpx_authmap_lookup')) {
+    // Ask (the last) integration module that stores the mapping in their own
+    // table/database, to return the Drupal user ID.
+    $uid = rpx_module_invoke_last('rpx_authmap_lookup', $authname);
+    return $uid ? user_load($uid) : FALSE;
+  }
+  else {
+    return user_external_load($authname);
+  }
+}
+
+/**
+ * Helper function: wrap user_get_authmaps() to support storing the authmap
+ * in a separate table/database.
+ *
+ * @see rpx_user_set_authmaps().
+ *
+ * @param string $authname: An external username (Engage identifier).
+ * @return
+ *   An associative array with module as key and username as value.
+ */
+function rpx_user_get_authmaps($authname) {
+  if (module_implements('rpx_authmap_lookup')) {
+    $uid = rpx_module_invoke_last('rpx_authmap_lookup', $authname);
+    return $uid ? array('rpx_core' => $authname) : 0;
+  }
+  else {
+    return user_get_authmaps($authname);
+  }
+}
+
+/**
+ * Helper function: delete engage Engage user identifiers.
+ *
+ * @see rpx_user_set_authmaps().
+ *
+ * @param array $aids: ID's of the authmaps to delete.
+ */
+function rpx_user_delete_authmaps($aids) {
+  if (module_implements('rpx_authmap_delete')) {
+    module_invoke_all('rpx_authmap_delete', $aids);
+  }
+  else {
+    $txn = db_transaction();
+    try {
+      db_delete('authmap')
+        ->condition('aid', $aids, 'IN')
+        ->execute();
+
+      if (module_exists('rpx_ui')) {
+        db_delete('rpx_linked_account')
+          ->condition('aid', $aids, 'IN')
+          ->execute();
+      }
+    }
+    catch (Exception $e) {
+      $txn->rollback();
+      watchdog_exception('rpx_core', $e);
+      throw $e;
+    }
+  }
+}
+
+/**
+ * Invoke a hook in the last module that implements it.
+ *
+ * @param string $hook: The name of the hook to invoke.
+ */
+function rpx_module_invoke_last($hook) {
+  $args = func_get_args();
+  // Remove $hook from the arguments.
+  unset($args[0]);
+  if ($modules = module_implements($hook)) {
+    $module = array_pop($modules);
+    if (module_hook($module, $hook)) {
+      return call_user_func_array($module . '_' . $hook, $args);
+    }
   }
 }
 

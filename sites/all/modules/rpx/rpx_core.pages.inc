@@ -53,61 +53,26 @@ function rpx_token_handler() {
       if (user_is_logged_in()) {
         // the identifier returned by auth_info() should not be already
         // mapped to an existing account
-        if (user_get_authmaps($rpx_id)) {
+        if (rpx_user_get_authmaps($rpx_id)) {
           $message = array(
             'text' => t('We were unable to complete your request.  That account ID is already linked to a user on our site.'),
             'type' => 'error',
           );
         }
         else {
-          $txn = db_transaction();
-          try {
-            // Can't use user_set_authmaps() here, since it doesn't support
-            // multiple authnames per user via same module
-            $result1 = $aid = db_insert('authmap')
-              ->fields(array(
-                'uid' => $user->uid,
-                'authname' => $rpx_id,
-                'module' => 'rpx_core',
-              ))
-            ->execute();
-            // rpx_linked_account table is created by the rpx_ui module.
-            if (module_exists('rpx_ui')) {
-              $result2 = db_insert('rpx_linked_account')
-                ->fields(array(
-                  'aid' => $aid,
-                  'provider_name' => $_SESSION['rpx_last_provider_info']['name'],
-                  'provider_title' => $_SESSION['rpx_last_provider_info']['title'],
-                ))
-                ->execute();
-            }
-          }
-          catch (Exception $e) {
-            $txn->rollback();
-            watchdog_exception('rpx_core', $e);
-          }
-
-          // Default (error) message.
-          $message = array(
-            'text' => t('We were unable to link your %provider account.', array('%provider' => $provider_title)),
-            'type' => 'error',
-          );
-          if (isset($result1) && isset($result2)) {
+          if (rpx_user_set_authmaps($user)) {
             $message = array(
               'text' => t('We have successfully linked your %provider account.', array('%provider' => $provider_title)),
               'type' => 'status',
             );
-            // Let other modules (e.g. rpx_rules) know that a linked account has been
-            // added.
-            $account = array(
-              'user' => $user,
-              'id' => $rpx_id,
-              'provider_machinename' => $_SESSION['rpx_last_provider_info']['name'],
-              'provider_title' => $_SESSION['rpx_last_provider_info']['title'],
-            );
-            module_invoke_all('rpx_linked_account', 'added', $account);
             _rpx_import_user_data($user);
             _rpx_update_engage_mapping($user->uid);
+          }
+          else {
+            $message = array(
+              'text' => t('We were unable to link your %provider account.', array('%provider' => $provider_title)),
+              'type' => 'error',
+            );
           }
         }
         rpx_core_delete_rpx_session();
@@ -133,7 +98,7 @@ function rpx_token_handler() {
       }
     }
 
-    $account = user_external_load($rpx_id);
+    $account = rpx_user_external_load($rpx_id);
 
     // Is this a registered user?
     if (isset($account->uid)) {
@@ -169,7 +134,6 @@ function rpx_token_handler() {
         }
       }
       else {
-        rpx_core_delete_rpx_session();
         drupal_set_message(t('You must validate your email address for this account before logging in with it.'), 'error');
       }
       drupal_goto();
@@ -184,15 +148,6 @@ function rpx_token_handler() {
           drupal_form_submit('user_register_form', $form_state);
           // See if the user was successfully registered.
           if (!empty($form_state['user'])) {
-            // Let other modules (e.g. rpx_rules) know that a linked account has been
-            // added.
-            $account = array(
-              'user' => $user,
-              'id' => $rpx_id,
-              'provider_machinename' => $_SESSION['rpx_last_provider_info']['name'],
-              'provider_title' => $_SESSION['rpx_last_provider_info']['title'],
-            );
-            module_invoke_all('rpx_linked_account', 'added', $account);
             // Nothing more to do.
             drupal_goto();
           }

@@ -16,7 +16,6 @@
 #user-menu-and-feed {
   float: right;
   margin: 0 auto;
-  width: 960px;
 }
 
 /*user-menu---------------------*/
@@ -24,13 +23,20 @@
   color: #666666;
   font-size: 12px;
   display: inline;
+  position: relative;
   padding: 1%;
+}
+
+#user-menu .login, 
+#user-menu .register {
+	display: inline;
+	float: left;
+	padding: 20px;
 }
 
 #user-menu-block {
   float: right;
   display: inline-block;
-  width: 10%;
 }
 
 #user-menu-user {
@@ -40,7 +46,9 @@
 #user-menu-avatar {
   display: block;
   margin: auto;
+  float: left;
   text-align: center;
+  width: 100%;
 }
 
 #user-menu ul {
@@ -54,15 +62,14 @@
 }
 
 #user-menu ul#user-menu-items {
-  display: inline-block;
-  float: right;
-  margin-right: 3%;
-  width: auto;
+  display: block;
+  float: left;
+  margin-right: 20px;
 }
 
 #user-menu ul#user-menu-items li {
   display: inline;
-  padding: 2% 4%;
+  padding: 20px;
 
 }
 

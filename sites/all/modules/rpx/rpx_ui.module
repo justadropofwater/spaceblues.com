@@ -532,17 +532,25 @@ function _rpx_user_help_text() {
  *   uid of the user that is being deleted.
  */
 function _rpx_delete_user_data($uid) {
-  db_delete('rpx_mapping_provider')
-    ->condition('uid', $uid)
-    ->execute();
+  if (module_implements('rpx_authmap_delete')) {
+    $aids = array_keys(rpx_user_get_identities($uid));
+    module_invoke_all('rpx_authmap_delete', $aids);
+  }
+  else {
+    db_delete('rpx_mapping_provider')
+      ->condition('uid', $uid)
+      ->execute();
 
-  $aids = db_select('authmap')
-    ->fields('authmap', array('aid'))
-    ->condition('uid', $uid);
+    $aids = db_select('authmap')
+      ->fields('authmap', array('aid'))
+      ->condition('uid', $uid);
 
-  db_delete('rpx_linked_account')
-    ->condition('aid', $aids, 'IN')
-    ->execute();
+    if (module_exists('rpx_ui')) {
+      db_delete('rpx_linked_account')
+        ->condition('aid', $aids, 'IN')
+        ->execute();
+    }
+  }
 }
 
 /**
@@ -573,4 +581,35 @@ function rpx_ui_views_api() {
     'api' => 2,
     'path' => drupal_get_path('module', 'rpx_ui') . '/views',
    );
+}
+
+/**
+ * Helper function: return a list of all Engage identifiers linked to the
+ * user. We support storing Engage identifiers in a custom table/database by
+ * providing a hook that integration modules can implement.
+ *
+ * @see rpx_user_set_authmaps().
+ *
+ * @param string $uid: the Drupal user ID we should return Engage identifiers
+ * for.
+ *
+ * @return array
+ *   An associative array of arrays with 3rd party account info (authname,
+ *   provider_name, provider_title), keyed by aid (authmap id).
+ */
+function rpx_user_get_identities($uid) {
+  if (module_implements('rpx_authmap_enumerate')) {
+    // Ask the integration module to return all Engage id's for the user.
+    $result = rpx_module_invoke_last('rpx_authmap_enumerate', $uid);
+    $providers = _rpx_providers(TRUE);
+
+    // Add provider title to authamp entry.
+    foreach ($result as &$id) {
+      $id['provider_title'] = $providers[$id['provider_name']];
+    }
+  }
+  else {
+    $result = db_query("SELECT am.aid, authname, provider_name, provider_title FROM {authmap} am INNER JOIN {rpx_linked_account} la ON am.aid = la.aid WHERE module = :module AND uid = :uid", array(':module' => 'rpx_core', ':uid' => $uid))->fetchAllAssoc('aid', PDO::FETCH_ASSOC);
+  }
+  return $result;
 }

@@ -792,7 +792,7 @@ function flag_page($action, $flag, $content_id) {
         'status' => FALSE,
         'errorMessage' => $error,
       ));
-      exit;
+      drupal_exit();
     }
     else {
       drupal_set_message($error);
@@ -814,7 +814,7 @@ function flag_page($action, $flag, $content_id) {
       'flagName' => $flag->name,
       'flagStatus' => $flag->is_flagged($content_id) ? 'flagged' : 'unflagged',
     ));
-    exit;
+    drupal_exit();
   }
   else {
     drupal_set_message($flag->get_label($action . '_message', $content_id));
@@ -1403,7 +1403,7 @@ function flag_get_flag_counts($flag_name, $reset = FALSE) {
   }
   if (!isset($counts[$flag_name])) {
     $flag = flag_get_flag($flag_name);
-    $counts[$flag_name] = db_select('flag_count', 'fc')->fields('fc', array('fcid'))
+    $counts[$flag_name] = db_select('flag_counts', 'fc')->fields('fc', array('fcid'))
       ->condition('fid', $flag->fid)->countQuery()->execute()->fetchField();
   }
 
@@ -1792,6 +1792,19 @@ function flag_create_link($flag_name, $content_id) {
 
 /**
  * Return an array of link types provided by modules.
+ *
+ * @param $reset
+ *  (Optional) Whether to reset the static cache.
+ *
+ * @return
+ *  An array of link types as defined by hook_flag_link_types(). These are keyed
+ *  by the type name, and each value is an array of properties. In addition to
+ *  those defined in hook_flag_link_types(), the following properties are set:
+ *  - 'module': The providing module.
+ *  - 'name': The machine name of the type.
+ *
+ * @see hook_flag_link_types()
+ * @see hook_flag_link_types_alter()
  */
 function flag_get_link_types($reset = FALSE) {
   static $link_types;

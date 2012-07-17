@@ -9,7 +9,7 @@
  * @see http://www.janrain.com/products/engage
  */
 
-define('RPX_SIGNIN_STRING', t('Facebook or Twitter'));
+define('RPX_SIGNIN_STRING', t('Sign in using one of these accounts:'));
 
 // Defaults for the social sharing settings.
 
@@ -481,83 +481,4 @@ function _rpx_event_enabled($event_name) {
  */
 function rpx_widgets_comment_insert($comment) {
   $_SESSION['rpx_comment_social_cid'] = $comment->cid;
-}
-
-// this block is now being created from the form above @see http://drupal.org/node/1315726
-
-/**
- * Implements hook_block_info().
- *
- * This hook declares what blocks are provided by the module.
- */
-function rpx_widgets_block_info() {
-
-  $blocks['rpx_block_icons'] = array(
-    'info' => t('RPX Block Icons'),
-    'status' => TRUE,
-    'region' => '',  // Not usually provided.
-  );
-
-  return $blocks;
-}
-
-/**
- * Implements hook_block_view().
- *
- * This hook generates the contents of the blocks themselves.
- */
-function rpx_widgets_block_view($delta = '') {
-  //The $delta parameter tells us which block is being requested.
-    $block = array();
-  switch ($delta) {
-    case 'rpx_block_icons':
-      $block['subject'] = t('Select an account below');
-      $block['content'] = _rpx_widgets_create_block();
-      break;
-  }
-  return $block;
-}
-
-function _rpx_widgets_create_block () {
-  rpx_js();
-  $items = array();
-  $realm = variable_get('rpx_realm', '');
-  $realm_scheme = variable_get('rpx_realm_scheme', 'http');
-  $sign_in_url = "$realm_scheme://$realm/openid/v2/signin";
-  $token_url = _rpx_token_url();
-  $providers = _rpx_providers();
-
-  // These options are common for all providers.
-  $options_template = array(
-    'query' => array('token_url' => $token_url),
-    'html' => TRUE,
-    'attributes' => array(
-      'class' => 'rpxnow',
-      'onclick' => 'return false;',
-      'onmousedown' => 'delete RPXNOW.default_provider;',
-    ),
-  );
-
-  $icons = '';
-  foreach ($providers as $provider_name => $provider_title) {
-    $options = $options_template;
-    // If it's the first Engage sign-in for the user, this will take them
-    // directly to the provider's dialog.
-    // @see https://rpxnow.com/docs#sign-in_default_provider
-    $options['attributes']['onmousedown'] = "RPXNOW.default_provider = '" . $provider_name . "';";
-    $icons .= l(theme('rpx_icon', array('provider' => $provider_name, 'size' => variable_get('rpx_login_icons_size', 'medium'))), $sign_in_url, $options);
-  }
-  $items[] = array(
-    'data' => l((variable_get('rpx_signin_string', RPX_SIGNIN_STRING) == '') ? RPX_SIGNIN_STRING : variable_get('rpx_signin_string', RPX_SIGNIN_STRING), $sign_in_url, $options_template) . '<br />' . $icons,
-    'class' => array ('rpx-link'),
-  );
-
-  $form['rpx_links'] = array(
-    '#theme' => 'item_list',
-    '#items' => $items,
-    '#attributes' => array('class' => array('rpx-links')),
-    '#weight' => variable_get('rpx_login_links_weight', 150),
-  );
-
-  return $form;    
 }

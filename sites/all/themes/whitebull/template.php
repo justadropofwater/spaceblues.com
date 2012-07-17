@@ -38,3 +38,19 @@ function whitebull_preprocess_page(&$variables) {
 
         }
   }
+  
+  function whitebull_preprocess_html(&$vars) {
+  
+  // Setup Google Webmasters Verification Meta Tag
+  $google_webmasters_verification = array(
+    '#type' => 'html_tag',
+    '#tag' => 'meta',
+    '#attributes' => array(
+      'name' => 'google-site-verification',
+      'content' => '6blgUc5WlpC_DSx20u_YcXQ4MCs9UhvBXwLAde9_fuM',
+    )
+  );
+  
+  // Add Google Webmasters Verification Meta Tag to head
+  drupal_add_html_head($google_webmasters_verification, 'google_webmasters_verification');
+}
