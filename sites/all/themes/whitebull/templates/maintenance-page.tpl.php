@@ -49,7 +49,7 @@
                     <div class="menu-wrapper">
                                     
                                     <div id="home-link" style="float:left;"> <!--this is a home link with an image, you can disable it with delete this or change the image in images directory. just enjoy it:D -->
-                                        <a href="<?php print $base_path  ?>" title="<?php print t('home') ?>" > <img src="<?php print $base_path . $directory; ?> /images/home.png" width="24" height="31" alt="<?php print t('home') ?>" /> </a>
+                                        <a href="<?php print $base_path ?>" title="<?php print t('home') ?>" > <img src="<?php print $base_path . $directory; ?>/images/home.png" width="24" height="31" alt="<?php print t('home') ?>" /> </a>
                                     </div>
                                                                 
                     </div>

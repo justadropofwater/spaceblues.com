@@ -93,7 +93,7 @@ function rpx_core_form_user_register_form_alter(&$form, &$form_state) {
   $profile = $rpx_data['profile'];
 
   // Use the nickname returned by Engage.
-  $form['account']['name']['#default_value'] = $profile['preferredUsername'];
+  $form['account']['name']['#default_value'] = $profile['displayName'];
   $mail = '';
   if (!empty($profile['verifiedEmail'])) {
     $mail = $profile['verifiedEmail'];
