@@ -583,3 +583,30 @@ div.pane-tracker-spaceblues-profile-portfolios-feed h2 {
 	background-color: white;
 	padding: 5em;
 }
+
+/* create a mother fuckin portfolio */
+.form-item-field-category-und .form-item {
+	display: inline;
+	padding-right: 2em;
+}
+.fieldset-wrapper .gallery-settings {
+	float: left;
+	display: inline;
+	position: relative;
+	left: 5px;
+	top: 12px;
+	width: 325px;
+}
+.fieldset-wrapper .presentation-settings {
+	display: inline;
+	position: relative;
+	left: 20px;
+}
+.node-form-has-region-right .form-region-main {
+float: left;
+width: 68%;
+}
+.node-form-has-region-right .form-region-footer {
+	clear: both;
+	display: none;
+}
