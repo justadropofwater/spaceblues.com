@@ -39,7 +39,7 @@
 			)
 		); 
 	} else {
-		print '<div id="user-menu-user">' . ' <a href="' . url('user/' . $user->uid) . '">' . '<img src="' . $base_path . 'sites/all/themes/whitebull/images/no-avatar-header.png" /></a></div>';
+		print '<div id="user-menu-user">' . ' <a href="' . url('user/' . $user->uid) . '">' . '<img src="sites/all/themes/zen_spaceblues/images/no-avatar-header.png" /></a></div>';
 	}	  
 	print '</div></div>';
 	
