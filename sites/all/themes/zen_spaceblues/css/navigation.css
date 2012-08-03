@@ -1,3 +1,4 @@
+
 /**
  * @file
  * Navigation Styling
@@ -107,9 +108,10 @@ li a.active {
   display: inline;
 }
 #user-menu-avatar {
-	position: absolute;
-	right: 1em;
-	top: 1em;
+	position: relative;
+	float: right;
+	right: 4em;
+	top: -5em;
 }
 #user-menu-items {
 	padding: 0;

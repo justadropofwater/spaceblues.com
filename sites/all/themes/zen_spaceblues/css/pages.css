@@ -341,13 +341,13 @@ div.pane-tracker-spaceblues-profile-portfolios-feed h2 {
 	margin-top: 0;
 	margin-bottom: 0;
 }
-#browse-container {
+#user-profile-container {
 	width: 100%;
 	height: 100%;
 	display: block;
 	float: left;
 }
-#browse-container .browse-portfolios {
+#user-profile-container .user-profile-my-portfolios {
 	float: left;
 	min-height: 100%;
 	background: #dff1f4;
@@ -355,7 +355,7 @@ div.pane-tracker-spaceblues-profile-portfolios-feed h2 {
 	padding: 0.5em;
 	width: 300px !important;
 }
-#browse-container .browse-portfolios-thumbnails {
+#user-profile-container .user-profile-portfolios-thumbnails {
 	width: 300px;
 	min-height: 200px;
 	padding: 1%;
@@ -364,46 +364,46 @@ div.pane-tracker-spaceblues-profile-portfolios-feed h2 {
 	display: inline;
 	float: left;
 }
-#browse-container .browse-portfolios-details {
+#user-profile-container .user-profile-portfolios-details {
 	float: left;
 	width: 300px;
 	min-height: 100%;
 	margin: 1em 0;
 }
-#browse-container .browse-portfolios-details div {
+#user-profile-container .user-profile-portfolios-details div {
 	padding: 0 0.5em;
 }
-#browse-container .category {
+#user-profile-container .category {
 	font-size: 0.7em;
 }
-#browse-container .browse-portfolios-details div a {
+#user-profile-container .user-profile-portfolios-details div a {
 	text-decoration: none;
 	font-size: 1.5em;
 	color: #df2126;
 }
-#browse-container div .browse-portfolios-item img {
+#user-profile-container div .user-profile-portfolios-item img {
 	padding: 1em;
 	vertical-align: top;
 	text-align: center;
 	border: #abadb0;
 }
 
-#browse-container div .browse-portfolios-item p {
+#user-profile-container div .user-profile-portfolios-item p {
 	margin: 0;
 }
-.browse-portfolios-actions {
+.user-profile-portfolios-actions {
 	width: 300px;
 	display: block;
 	float: left;
 	
 }
-.browse-portfolios-actions a,
-.browse-portfolios-actions a:link,
-.browse-portfolios-actions a:visited {
+.user-profile-portfolios-actions a,
+.user-profile-portfolios-actions a:link,
+.user-profile-portfolios-actions a:visited {
 	text-decoration: none;
 	color: white;
 }
-.browse-portfolios-actions .browse-portfolios-comment-count {
+.user-profile-portfolios-actions .user-profile-portfolios-comment-count {
 	background-image: url('../images/comment_count.png');
 	background-repeat: no-repeat;
 	background-position: 50% 50%;
@@ -412,12 +412,12 @@ div.pane-tracker-spaceblues-profile-portfolios-feed h2 {
 	height: 20px;
 	float: left;
 }
-.browse-portfolios-actions .browse-portfolios-comment-count .text {
+.user-profile-portfolios-actions .user-profile-portfolios-comment-count .text {
 	text-align: center;
 	line-height: 1.25em;
 }
 
-.browse-portfolios-actions .browse-portfolios-favorite-count {
+.user-profile-portfolios-actions .user-profile-portfolios-favorite-count {
 	background-image: url('../images/favorite_count.png');
 	background-repeat: no-repeat;
 	background-position: 50% 50%;
@@ -426,7 +426,7 @@ div.pane-tracker-spaceblues-profile-portfolios-feed h2 {
 	height: 20px;
 	float: left;
 }
-.browse-portfolios-actions .browse-portfolios-favorite-count .text {
+.user-profile-portfolios-actions .user-profile-portfolios-favorite-count .text {
 	text-align: center;
 	line-height: 1.4em;
 }
