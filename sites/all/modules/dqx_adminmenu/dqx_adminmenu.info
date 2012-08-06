@@ -1,0 +1,14 @@
+name = "DQX AdminMenu"
+description = "Alternative to the 'Administration Menu' module."
+package = Administration
+core = 7.x
+php = 5.2
+dependencies[] = pageapi
+dependencies[] = xautoload
+
+; Information added by drupal.org packaging script on 2012-07-30
+version = "7.x-2.0-alpha1"
+core = "7.x"
+project = "dqx_adminmenu"
+datestamp = "1343667112"
+

@@ -6,40 +6,6 @@
  */
 
 /**
- * Implements hook_views_handlers().
- */
-function flag_views_handlers() {
-  return array(
-    'info' => array(
-      'path' => drupal_get_path('module', 'flag') . '/includes',
-    ),
-    'handlers' => array(
-      'flag_handler_relationship_content' => array(
-        'parent' => 'views_handler_relationship',
-        'file' => 'flag_handler_relationships.inc',
-      ),
-      'flag_handler_relationship_counts' => array(
-        'parent' => 'views_handler_relationship',
-        'file' => 'flag_handler_relationships.inc',
-      ),
-      'flag_handler_relationship_user_content' => array(
-        'parent' => 'views_handler_relationship',
-        'file' => 'flag_handler_relationships.inc',
-      ),
-      'flag_handler_field_ops' => array(
-        'parent' => 'views_handler_field',
-      ),
-      'flag_handler_filter_flagged' => array(
-        'parent' => 'views_handler_filter_boolean_operator',
-      ),
-      'flag_handler_argument_content_id' => array(
-        'parent' => 'views_handler_argument_numeric',
-      ),
-    ),
-  );
-}
-
-/**
  * Implements hook_views_plugins().
  */
 function flag_views_plugins() {
@@ -73,12 +39,23 @@ function flag_views_data() {
   $data['flag_counts']['table']['group'] = t('Flags');
 
   $data['flag_content']['uid'] = array(
-    'title' => t('User'),
-    'help' => t('The user that flagged an item.'),
+    'title' => t('User uid'),
+    'help' => t('The user that flagged an item. If you need more fields than the uid add the "Flags: User" relationship.'),
     'relationship' => array(
       'base' => 'users',
+      'title' => t('User'),
+      'help' => t('Relate an item to the user that flagged it.'),
       'handler' => 'views_handler_relationship',
       'label' => t('Flag user'),
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_user_name',
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_numeric',
+    ),
+    'field' => array(
+      'handler' => 'views_handler_field_user',
     ),
   );
 

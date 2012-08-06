@@ -12,9 +12,6 @@ planned features and improvements.
 * Install as usual, see http://drupal.org/documentation/install/modules-themes/modules-7
   for further information.
   
-* Install Media Gallery Multiform module to fix incompatible Media Gallery
-  dependency with Multiform 7.x-1.0 module.
-
 -- CONTACT --
 
 Author and maintainer:

@@ -180,7 +180,7 @@ function geocoder_field_attach_presave($entity_type, $entity) {
  */
 function geocoder_widget_get_field_value($entity_type, $field_instance, $entity = NULL, $source_field_values = NULL) {
   if (!$source_field_values && !$entity) {
-    trigger_error('geocoder_widget_get_field_value: You must pass either $source_field_values OR $entity', E_WARNING);
+    trigger_error('geocoder_widget_get_field_value: You must pass either $source_field_values OR $entity', E_USER_ERROR);
     return FALSE;
   }
 
@@ -264,9 +264,14 @@ function geocoder_widget_get_field_value($entity_type, $field_instance, $entity 
           if ($geometry instanceof Geometry) {
             $geometries[] = $geometry;
           }
+          else {
+            // An error occured
+            return FALSE;
+          }
         }
         catch (Exception $e) {
-          trigger_error('Geocoding Error: ' . $e->getMessage(), E_WARNING);
+          watchdog_exception('geocoder', $e);
+          return FALSE;
         }
       }
       

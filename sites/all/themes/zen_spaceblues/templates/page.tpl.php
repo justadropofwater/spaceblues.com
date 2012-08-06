@@ -79,42 +79,6 @@
       	<img src="<?php print $logo; ?>" alt="<?php print t('Home'); ?>" />
       </a>
 
-      <?php if ($site_name || $site_slogan): ?>
-      	<hgroup id="name-and-slogan">
-        	<?php if ($site_name): ?>
-        		<h1 id="site-name">
-        		<a href="<?php print $front_page; ?>" title="<?php print t('Home'); ?>" rel="home">
-        			<span>
-        				<?php print $site_name; ?>
-        			</span>
-        		</a>
-        		</h1>
-        	<?php endif; ?>
-
-	        <?php if ($site_slogan): ?>
-	          <h2 id="site-slogan"><?php print $site_slogan; ?></h2>
-	        <?php endif; ?>
-	    </hgroup><!-- /#name-and-slogan -->
-	   <?php endif; ?>
-
-
-      <?php
-// Set the block ID
-$bid = 1;
-
-// Load the block
-$block = block_load('menu_block', $bid);
-
-// Get the output array
-$output = _block_get_renderable_array(_block_render_blocks(array($block)));
-
-// Set the block subject to an empty string
-//$output['block_' . $bid]['#block']->subject = '';
-
-// Output
-print render($output);        
-
-?>
 
     <?php print render($page['header']); ?>
 

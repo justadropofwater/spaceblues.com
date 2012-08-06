@@ -128,11 +128,12 @@ function media_gallery_extra_media_add_upload_multiple_submit($form, &$form_stat
       // Rename it to its original name, and put it in its final home.
       // Note - not using file_move here because if we call file_get_mime
       // (in file_uri_to_object) while it has a .tmp extension, it horks.
+
       $destination = file_unmanaged_move($source, $destination, FILE_EXISTS_RENAME);
 
       $file = file_uri_to_object($destination);
       file_save($file);
-      _media_save_file_permenently($file);
+      _media_gallery_extra_save_file_permanently($file);
 
       $saved_files[] = $file;
     }
@@ -147,4 +148,14 @@ function media_gallery_extra_media_add_upload_multiple_submit($form, &$form_stat
     $fids[] = $file->fid;
   }
   $form_state['redirect'] = array('media/browser', array('query' => array('render' => 'media-popup', 'fid' => $fids)));
+}
+
+/**
+ * Function copied from media.module, to not break compatibility with media < 7.x-1.2
+ */
+function _media_gallery_extra_save_file_permanently($file) {
+  if ($file->status < FILE_STATUS_PERMANENT) {
+    $file->status = FILE_STATUS_PERMANENT;
+    file_save($file);
+  }
 }

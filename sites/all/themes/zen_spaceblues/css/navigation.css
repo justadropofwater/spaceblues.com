@@ -79,11 +79,41 @@ li a.active {
 /*
  * Main menu and Secondary menu links
  */
-
-#main-menu {
+#block-system-main-menu {
+	float: left;
+	position: relative;
+	display: inline-block;
 }
 
-#block-menu-block-1 a, #block-menu-block-1 a:visited {
+#block-system-main-menu li.last span.muchomenu-parent-title {
+	display: none;
+}
+
+#block-system-main-menu .muchomenu-bin-3 {
+	list-style: none;
+	float: left;
+	z-index: 900000;
+	width: 225px;
+	position: absolute;
+	right: 145px;
+	display: inline !important;
+	top: 1em;
+	font-size: .75em;
+	display: inline-block;
+}
+
+#block-system-main-menu  .panel-display .bryant-flipped {
+	padding: 0;
+	border: none;
+	border-radius: 0;
+	display: inline;
+	float: left;
+	z-index: 300000;
+	width: 225px;
+	height: 75px;
+}
+
+#block-system-main-menu a, #block-system-main-menu a:visited {
 	text-transform: uppercase;
 	position: relative;
 	top: 42px;
@@ -92,7 +122,7 @@ li a.active {
 	text-decoration: none;	
 	color: #383d41;
 }
-#block-menu-block-1 a:hover, #block-menu-block-1 a:active {
+#block-system-main-menu a:hover, #block-system-main-menu a:active {
 	text-transform: uppercase;
 	position: relative;
 	top: 42px;
@@ -102,75 +132,123 @@ li a.active {
 	color: #d42126;
 }
 
-#user-menu {
-  float: right; /* LTR */
-  width: auto;
-  display: inline;
-}
-#user-menu-avatar {
-	position: relative;
-	float: right;
-	right: 4em;
-	top: -5em;
-}
-#user-menu-items {
+#block-system-main-menu ul.menu {
 	padding: 0;
 	margin: 0;
 	display: inline;
+	position: relative;
+	right: 0;
+	top: 0;
+	float: right;
 }
-#user-menu-items div.leaf {
+#block-system-main-menu li.leaf {
 	display: inline-block;
 	margin: 0 auto;
 	padding: 0 2em;
 	vertical-align: top;
 	min-height: 72px;
-	background: white;]
+	background: white;
     background:
-        -moz-linear-gradient(45deg, transparent 2px, #ffffff 2px),
-        -moz-linear-gradient(135deg, transparent 2px, #ffffff 2px),
-          -moz-linear-gradient(225deg, #fffffft 2px, #ffffff 2px),
-        -moz-linear-gradient(315deg, #ffffff 2px, #ffffff 2px);
+        -moz-linear-gradient(45deg, transparent 5px, #ffffff 5px),
+        -moz-linear-gradient(135deg, transparent 5px, #ffffff 5px),
+          -moz-linear-gradient(225deg, #fffffft 5px, #ffffff 5px),
+        -moz-linear-gradient(315deg, #ffffff 5px, #ffffff 5px);
     background:
-        -o-linear-gradient(45deg, transparent 2px, #ffffff 2px),
-        -o-linear-gradient(135deg, transparent 2px, #ffffff 2px),
-                -o-linear-gradient(225deg, #ffffff 2px, #ffffff 2px),
-        -o-linear-gradient(315deg, #fffffft 2px, #ffffff 2px);
+        -o-linear-gradient(45deg, transparent 5px, #ffffff 5px),
+        -o-linear-gradient(135deg, transparent 5px, #ffffff 5px),
+                -o-linear-gradient(225deg, #ffffff 5px, #ffffff 5px),
+        -o-linear-gradient(315deg, #fffffft 5px, #ffffff 5px);
     background:
-        -webkit-linear-gradient(45deg, transparent 2px, #ffffff 2px),
-        -webkit-linear-gradient(135deg, transparent 2px, #ffffff 2px),
-                -webkit-linear-gradient(225deg, #ffffff 2px, #ffffff 2px),
-        -webkit-linear-gradient(315deg, #ffffff 2px, #ffffff 2px);
+        -webkit-linear-gradient(45deg, transparent 5px, #ffffff 5px),
+        -webkit-linear-gradient(135deg, transparent 5px, #ffffff 5px),
+                -webkit-linear-gradient(225deg, #ffffff 5px, #ffffff 5px),
+        -webkit-linear-gradient(315deg, #ffffff 5px, #ffffff 5px);
     background-position: bottom left, bottom right, top left, top right;
     -moz-background-size: 50% 50%;
     -webkit-background-size: 50% 50%;
     background-size: 50% 50%;
     background-repeat: no-repeat;        
 }
-#user-menu-items div.last {
+
+#block-panels-mini-user-menu {
 	display: inline-block;
 	background: #d42126;
 	font-size: 0.8em;
-	min-height: 0;
-	padding: 0 1em;
+	min-height: 75px;
+	padding: 0;
+	margin: 0;
+	float: left;
+	top: 0;
+	right: 0;
+	width: auto;
+	min-width: 200px;
+	position: relative;
+	left: 2em;
 }
-#user-menu-items div.last a,
-#user-menu-items div.last a:visited {
+
+#block-panels-mini-user-menu .panel-display.bryant-flipped .bryant-flipped-content-container {
+	margin-bottom: 0 !important;
+	margin: 0;
+	padding: 0;
+}
+
+#block-panels-mini-user-menu .panel-display.bryant-flipped .bryant-flipped-content-inner {
+	margin-right: 0 !important;
+	margin: 0;
+	padding: 0;
+}
+
+#block-panels-mini-user-menu .panel-display.bryant-flipped .bryant-flipped-content {
+	width: auto;
+	height: 75px;
+	padding: 0;
+	margin: 0;
+	float: left;
+}
+
+#block-panels-mini-user-menu .panel-display.bryant-flipped .bryant-flipped-sidebar {
+	width: 25%;
+	padding: 0;
+	margin: 0;
+	float: right;
+}
+
+#block-panels-mini-user-menu ul.menu {
+	padding: 0.5em 0 0 0.5em;
+	margin: 0;
+	list-style: none;
+}
+
+#block-panels-mini-user-menu ul.menu li.first ul.menu {
+	padding: 0;
+}
+
+#block-panels-mini-user-menu ul.menu li.first ul.menu li {
+	list-style: none;
+}
+
+#block-panels-mini-user-menu a,
+block-panels-mini-user-menu a:visited {
 	text-align: center;
 	text-decoration: none;
 	padding: 0;
 	top: 0;
 	position: relative;
+	color: #393d41;
 }
-#user-menu-items div.last a:hover {
+
+#block-panels-mini-user-menu a:hover {
 	color: #f2f4f5;
 }
 
-#user-menu-account {
+#block-panels-mini-user-menu ul.menu {
 	position: relative;
-	width: 200px;
+	width: auto;
+	list-style: none;
+	margin: 0;
+	padding: 0 0 0 1em;
 }
-#user-menu-account div,
-#user-menu-account div.leaf {
+#block-panels-mini-user-menu li {
 	background: #d42126;
 	padding: 0;
 	min-height: 0;
@@ -179,20 +257,34 @@ li a.active {
 	background-position: center center;
 	background-repeat: repeat;
 	border: 0;
+	list-style: none;
 	
 }
-#user-menu-account div a,
-#user-menu-account div a:visited {
+#block-panels-mini-user-menu div ul.menu li.menu-mlid-1691 ul.menu a,
+#block-panels-mini-user-menu div ul.menu li.menu-mlid-1691 ul.menu a:visited {
 	color: white;
 	text-decoration: none;
 	line-height: 0.7em;
 	text-align: left;
+	list-style: none;
 }
-#user-menu-account div a:hover {
-	color: #393d41 !important;
+
+#block-panels-mini-user-menu div ul.menu li.menu-mlid-1691 a,
+#block-panels-mini-user-menu div ul.menu li.menu-mlid-1691 a:visted {
+	color: #393d41;
+}	
+#block-panels-mini-user-menu div ul.menu li.menu-mlid-1691 a:hover {
+	color: white !important;
 }
-a.link-badge-wrapper span {
+#block-panels-mini-user-menu a.link-badge-wrapper span {
 	display: inline !important;
+}
+
+#block-panels-mini-user-menu .pane-user-picture {
+	position: relative;
+	float: right;
+	right: 1em;
+	top: 1em;
 }
 
 /** tabs tabs tabs ***/

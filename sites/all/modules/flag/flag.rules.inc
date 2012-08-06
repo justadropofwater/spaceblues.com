@@ -83,6 +83,11 @@ class FlagRulesUIClass extends RulesDataUI implements RulesDataDirectInputFormIn
 
   public static function render($value) {
     $flag = flag_get_flag($value);
+
+    if ($flag === FALSE) {
+      return array();
+    }
+
     return array(
       'content' => array('#markup' => check_plain($flag->get_title())),
       '#attributes' => array('class' => array('rules-parameter-flag')),
@@ -176,6 +181,29 @@ function flag_rules_action_info() {
       'group' => t('Flag'),
       'access callback' => 'flag_rules_integration_access',
     ),
+    'flag_fetch_entity_by_user' => array(
+      'label' => t('Fetch content flagged by user'),
+      'base' => 'flag_rules_action_fetch_entity_by_user',
+      'parameter' => array(
+        'flag' => array(
+          'type' => 'flag',
+          'label' => t('Flag'),
+        ),
+        'flagging_user' => array(
+          'type' => 'user',
+          'label' => t('User who flagged the content'),
+          'description' => t('For non-global flags, this is the user who flagged the content. (For global flags, this argument is ignored.)'),
+        ),
+      ),
+      'provides' => array(
+        'content_flagged_by_user' => array(
+          'label' => t('Content flagged by user'),
+          'type' => 'list<node>',
+        ),
+      ),
+      'group' => t('Flag'),
+      'access callback' => 'flag_rules_integration_access',
+    ),
   );
   $param_defaults = array(
     'flagging_user' => array(
@@ -185,8 +213,8 @@ function flag_rules_action_info() {
     ),
     'permission_check' => array(
       'type' => 'boolean',
-      'label' => t('Permission check'),
-      'description' => t('Whether to check access permissions against the user on whose behalf to flag.'),
+      'label' => t('Skip permission check'),
+      'description' => t('Whether to ignore permissions of the user on whose behalf to flag.'),
       'restriction' => 'input',
     ),
   );
@@ -293,6 +321,21 @@ function flag_rules_action_fetch_users($flag, $entity) {
   $uids = $result->fetchCol();
   // Filter out anonymous users.
   return array('users' => array_filter($uids));
+}
+
+/**
+ * Base action implementation: Fetch entities who were flagged a user.
+ */
+function flag_rules_action_fetch_entity_by_user($flag, $user) {
+  $result = db_select('flag_content', 'fc')
+    ->fields('fc', array('content_id'))
+    ->condition('content_type', $flag->content_type)
+    ->condition('uid', $user->uid)
+    ->condition('fid', $flag->fid)
+    ->execute();
+
+  $flagged = $result->fetchCol();
+  return array('content_flagged_by_user' => $flagged);
 }
 
 /**

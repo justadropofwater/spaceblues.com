@@ -82,7 +82,10 @@ body {
 }
 
 .region-header { /* Wrapper for any blocks placed in the header region */
-  clear: both; /* Clear the logo */
+ float: right; 
+ position: relative;
+ top: 0;
+ right: 2em;
 }
 
 /*
@@ -287,7 +290,7 @@ span.field-label { /* The inline field label used by the Fences module */
 
 #main-profile-2,
 #main-profile-4 {
-	width: 22%;
+	width: 15%;
 }
 #main-profile-3 {
 	width: 300px !important;
