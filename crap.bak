@@ -1,0 +1,10 @@
+{ "rules_first_login_redirection" : {
+    "LABEL" : "First Time Login Redirection",
+    "PLUGIN" : "reaction rule",
+    "ACTIVE" : false,
+    "TAGS" : [ "user" ],
+    "REQUIRES" : [ "rules" ],
+    "ON" : [ "user_insert" ],
+    "DO" : [ { "redirect" : { "url" : "node\/add\/media-gallery" } } ]
+  }
+}

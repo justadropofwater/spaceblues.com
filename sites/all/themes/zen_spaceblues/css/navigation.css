@@ -138,8 +138,9 @@ li a.active {
 	display: inline;
 	position: relative;
 	right: 0;
-	top: 0;
+	top: 0.5em;
 	float: right;
+	overflow:visible;
 }
 #block-system-main-menu li.leaf {
 	display: inline-block;
@@ -168,6 +169,48 @@ li a.active {
     -webkit-background-size: 50% 50%;
     background-size: 50% 50%;
     background-repeat: no-repeat;        
+}
+
+#block-system-main-menu li.first.leaf {
+	background-image: url('../images/discover_off.png');
+	background-size: 4.5em;
+	background-repeat: no-repeat;
+	background-position: 50% 50%;
+}
+
+#block-system-main-menu li.first.leaf:hover {
+	background-image: url('../images/discover.png');
+	background-size: 5em;
+	background-repeat: no-repeat;
+	background-position: 50% 50%;
+}
+
+#block-system-main-menu li.leaf {
+	background-image: url('../images/shop_off.png');
+	background-size: 4em;
+	background-repeat: no-repeat;
+	background-position: 50% 50%;
+}
+
+#block-system-main-menu li.leaf:hover {
+	background-image: url('../images/shop.png');
+	background-size: 4.5em;
+	background-repeat: no-repeat;
+	background-position: 50% 50%;
+}
+
+#block-system-main-menu li.last.leaf {
+	background-image: url('../images/create_off.png');
+	background-size: 2.25em;
+	background-repeat: no-repeat;
+	background-position: 50% 50%;
+}
+
+#block-system-main-menu li.last.leaf:hover {
+	background-image: url('../images/create.png');
+	background-size: 2.75em;
+	background-repeat: no-repeat;
+	background-position: 50% 50%;
 }
 
 #block-panels-mini-user-menu {
@@ -261,6 +304,7 @@ block-panels-mini-user-menu a:visited {
 	
 }
 #block-panels-mini-user-menu div ul.menu li.menu-mlid-1691 ul.menu a,
+#block-panels-mini-user-menu div ul.menu li.menu-mlid-1691 ul.menu a:link,
 #block-panels-mini-user-menu div ul.menu li.menu-mlid-1691 ul.menu a:visited {
 	color: white;
 	text-decoration: none;
@@ -269,13 +313,20 @@ block-panels-mini-user-menu a:visited {
 	list-style: none;
 }
 
+#block-panels-mini-user-menu div ul.menu li.menu-mlid-1691 ul.menu a: {
+	color: #393d41;
+}
+
 #block-panels-mini-user-menu div ul.menu li.menu-mlid-1691 a,
+#block-panels-mini-user-menu div ul.menu li.menu-mlid-1691 a:link,
 #block-panels-mini-user-menu div ul.menu li.menu-mlid-1691 a:visted {
 	color: #393d41;
 }	
+
 #block-panels-mini-user-menu div ul.menu li.menu-mlid-1691 a:hover {
 	color: white !important;
 }
+
 #block-panels-mini-user-menu a.link-badge-wrapper span {
 	display: inline !important;
 }
@@ -285,6 +336,7 @@ block-panels-mini-user-menu a:visited {
 	float: right;
 	right: 1em;
 	top: 1em;
+	max-width: 100px;
 }
 
 /** tabs tabs tabs ***/

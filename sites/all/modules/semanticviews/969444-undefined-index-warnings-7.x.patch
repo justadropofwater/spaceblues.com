@@ -1,0 +1,81 @@
+diff --git a/semanticviews-view-fields.tpl.php b/semanticviews-view-fields.tpl.php
+index 83b5fff..fd087aa 100644
+--- a/semanticviews-view-fields.tpl.php
++++ b/semanticviews-view-fields.tpl.php
+@@ -28,19 +28,19 @@
+ ?>
+ <?php foreach ($fields as $id => $field): ?>
+ 
+-  <?php if ($field->element_type): ?>
++  <?php if (!empty($field->element_type)): ?>
+     <<?php print $field->element_type; ?><?php print drupal_attributes($field->attributes); ?>>
+   <?php endif; ?>
+ 
+-    <?php if ($field->label): ?>
++    <?php if (!empty($field->label)): ?>
+ 
+-      <?php if ($field->label_element_type): ?>
++      <?php if (!empty($field->label_element_type)): ?>
+         <<?php print $field->label_element_type; ?><?php print drupal_attributes($field->label_attributes); ?>>
+       <?php endif; ?>
+ 
+           <?php print $field->label; ?>:
+ 
+-      <?php if ($field->label_element_type): ?>
++      <?php if (!empty($field->label_element_type)): ?>
+         </<?php print $field->label_element_type; ?>>
+       <?php endif; ?>
+ 
+@@ -48,7 +48,7 @@
+ 
+       <?php print $field->content; ?>
+ 
+-  <?php if ($field->element_type): ?>
++  <?php if (!empty($field->element_type)): ?>
+     </<?php print $field->element_type; ?>>
+   <?php endif; ?>
+ 
+diff --git a/semanticviews.theme.inc b/semanticviews.theme.inc
+index 0a703a0..6b1177a 100644
+--- a/semanticviews.theme.inc
++++ b/semanticviews.theme.inc
+@@ -29,22 +29,24 @@ function template_preprocess_semanticviews_view_fields(&$vars) {
+ 
+       $object->handler = &$view->field[$id];
+ 
+-      $semantic_html = $vars['options']['semantic_html'][$id];
+-
+-      // Field content
+-      $object->element_type = check_plain($semantic_html['element_type']);
+-      $object->attributes = array();
+-      if ($semantic_html['class']) {
+-        $object->attributes['class'] = $semantic_html['class'];
+-      }
++      if (isset($vars['options']['semantic_html'][$id])) {
++        $semantic_html = $vars['options']['semantic_html'][$id];
++
++        // Field content
++        $object->element_type = check_plain($semantic_html['element_type']);
++        $object->attributes = array();
++        if ($semantic_html['class']) {
++          $object->attributes['class'] = $semantic_html['class'];
++        }
+ 
+-      // Field label
+-      $object->label = check_plain($view->field[$id]->label());
+-      if (!empty($object->label)) {
+-        $object->label_element_type = check_plain($semantic_html['label_element_type']);
+-        $object->label_attributes = array();
+-        if ($semantic_html['label_class']) {
+-          $object->label_attributes['class'] = $semantic_html['label_class'];
++        // Field label
++        $object->label = check_plain($view->field[$id]->label());
++        if (!empty($object->label)) {
++          $object->label_element_type = check_plain($semantic_html['label_element_type']);
++          $object->label_attributes = array();
++          if ($semantic_html['label_class']) {
++            $object->label_attributes['class'] = $semantic_html['label_class'];
++          }
+         }
+       }
+ 

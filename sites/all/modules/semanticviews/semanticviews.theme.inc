@@ -29,22 +29,24 @@ function template_preprocess_semanticviews_view_fields(&$vars) {
 
       $object->handler = &$view->field[$id];
 
-      $semantic_html = $vars['options']['semantic_html'][$id];
+      if (isset($vars['options']['semantic_html'][$id])) {
+        $semantic_html = $vars['options']['semantic_html'][$id];
 
-      // Field content
-      $object->element_type = check_plain($semantic_html['element_type']);
-      $object->attributes = array();
-      if ($semantic_html['class']) {
-        $object->attributes['class'] = $semantic_html['class'];
-      }
+        // Field content
+        $object->element_type = check_plain($semantic_html['element_type']);
+        $object->attributes = array();
+        if ($semantic_html['class']) {
+          $object->attributes['class'] = $semantic_html['class'];
+        }
 
-      // Field label
-      $object->label = check_plain($view->field[$id]->label());
-      if (!empty($object->label)) {
-        $object->label_element_type = check_plain($semantic_html['label_element_type']);
-        $object->label_attributes = array();
-        if ($semantic_html['label_class']) {
-          $object->label_attributes['class'] = $semantic_html['label_class'];
+        // Field label
+        $object->label = check_plain($view->field[$id]->label());
+        if (!empty($object->label)) {
+          $object->label_element_type = check_plain($semantic_html['label_element_type']);
+          $object->label_attributes = array();
+          if ($semantic_html['label_class']) {
+            $object->label_attributes['class'] = $semantic_html['label_class'];
+          }
         }
       }
 

@@ -35,10 +35,26 @@
 				// Pause & play on hover
 				$('.browse-portfolios').hover(function(){
 					$(this).find('.browse-portfolios-thumbnails').addClass('active').cycle('resume');
+										$(this).find('.browse-portfolios-author-details').css('visibility','visible');
+
 				}, function(){
 					$(this).find('.browse-portfolios-thumbnails').removeClass('active').cycle('pause');
+										$(this).find('.browse-portfolios-author-details').css('visibility','hidden');	
+
+				
 				});	   	           
 			});
+		
+/*
+			$('.browse-portfolios').each(function() {
+				$('.browse-portfolios-details').hover(function(){
+					$(this).find('.browse-portfolios-author-details').css('visibility','visible');
+					}, function(){
+					$(this).find('.browse-portfolios-author-details').css('visibility','hidden');	
+				});
+			});
+*/
+			
 		}
 	}
 })(jQuery, Drupal, this, this.document);

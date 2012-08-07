@@ -8,25 +8,25 @@
 			<?php
 			
 			$node = $variables['node'];
-$author = user_load($node->uid);
+			$author = user_load($node->uid);
 				print '<div>';
-	if($user->picture){
-		print theme_image_style(
-			array(
-				'style_name' => 'user_avatar_header',
-				'path' => $author->picture->uri,
-				//'alt' =>	$alt,
-				'width' => NULL,
-				'height' => NULL,
-				'attributes' => array(
-					'class' => 'avatar'
-				)			 
-			)
-		); 
-	} else {
-		print '<div>' . ' <a href="' . url('user/' . $user->uid) . '">' . '<img src="' . $base_path . 'sites/all/themes/whitebull/images/no-avatar-header.png" /></a></div>';
-	}	  
-	print '</div>'
+				if($user->picture){
+					print theme_image_style(
+						array(
+							'style_name' => 'user_avatar_header',
+							'path' => $author->picture->uri,
+							//'alt' =>	$alt,
+							'width' => NULL,
+							'height' => NULL,
+							'attributes' => array(
+								'class' => 'avatar'
+							)			 
+						)
+					); 
+				} else {
+					print '<div>' . ' <a href="' . url('/user/' . $user->uid) . '">' . '<img src="/sites/all/themes/zen_spaceblues/images/no-avatar-header.png" /></a></div>';
+				}	  
+				print '</div>'
 				?>
 			</div>
             <div class="portfolio-author-name"><?php print t('!username',array('!username' => $name)); ?></div>
